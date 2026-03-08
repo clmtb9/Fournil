@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- Background -->
+  <rect width="192" height="192" rx="40" fill="#2C1810"/>
+  <!-- Golden arc (bread crust shape) -->
+  <path d="M48 130 Q96 50 144 130 Z" fill="#C4962A"/>
+  <!-- Bread body -->
+  <ellipse cx="96" cy="126" rx="52" ry="22" fill="#E8B84B"/>
+  <!-- Score lines -->
+  <line x1="80" y1="108" x2="74" y2="130" stroke="#C4962A" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="96" y1="103" x2="96" y2="128" stroke="#C4962A" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="112" y1="108" x2="118" y2="130" stroke="#C4962A" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Wheat stalk -->
+  <line x1="96" y1="44" x2="96" y2="72" stroke="#E8B84B" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="96" cy="40" rx="5" ry="8" fill="#E8B84B"/>
+  <ellipse cx="88" cy="50" rx="4" ry="7" fill="#E8B84B" transform="rotate(-30 88 50)"/>
+  <ellipse cx="104" cy="50" rx="4" ry="7" fill="#E8B84B" transform="rotate(30 104 50)"/>
+</svg>
