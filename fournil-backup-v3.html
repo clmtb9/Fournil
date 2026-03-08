@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="theme-color" content="#2C1810"/>
+  <title>Fournil — BACKUP v3</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:#F5F0E8; --cream-dark:#EDE5D4; --parchment:#D4C4A0;
+      --brown-deep:#2C1810; --brown-mid:#5C3D2E; --brown-light:#8B6551;
+      --gold:#C4962A; --gold-light:#E8B84B; --rust:#A0522D;
+      --text-main:#2C1810; --text-muted:#7A5C4A; --shadow:rgba(44,24,16,0.15);
+      --green:#7EC88A; --orange:#E8A84B;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{width:100%;overflow-x:hidden}
+    body{background:var(--cream);color:var(--text-main);font-family:'Lora',Georgia,serif;min-height:100vh}
+    .app-header{background:var(--brown-deep);padding:16px 20px 12px;position:sticky;top:0;z-index:100;
+      display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+    .app-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,var(--gold),var(--gold-light),var(--gold),transparent)}
+    .logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--cream);
+      letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+    .logo span{color:var(--gold-light)}
+    .backup-badge{font-family:'DM Mono',monospace;font-size:10px;background:var(--rust);
+      color:white;padding:3px 8px;border-radius:10px;letter-spacing:.06em}
+    .header-back{color:var(--parchment);background:none;border:none;font-size:13px;
+      font-family:'DM Mono',monospace;cursor:pointer;display:flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:6px;transition:all .2s;white-space:nowrap}
+    .header-back:hover{background:rgba(255,255,255,.1);color:var(--cream)}
+    .screen{display:none;animation:fadeIn .3s ease}
+    .screen.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .home-hero{background:linear-gradient(160deg,var(--brown-deep) 0%,var(--brown-mid) 100%);
+      padding:28px 24px 32px;position:relative;overflow:hidden}
+    .home-hero::before{content:'🌾';position:absolute;right:-10px;top:-10px;font-size:120px;opacity:.08;transform:rotate(-15deg)}
+    .home-hero h1{font-family:'Playfair Display',serif;font-size:clamp(22px,5vw,30px);
+      font-weight:700;color:var(--cream);line-height:1.2;margin-bottom:6px}
+    .home-hero p{font-family:'DM Mono',monospace;font-size:11px;color:var(--parchment);
+      letter-spacing:.08em;text-transform:uppercase}
+    .home-stat-bar{background:var(--cream-dark);border-bottom:1px solid var(--parchment);
+      padding:16px 24px;display:flex;align-items:center;gap:12px}
+    .home-stat-num{font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:var(--gold)}
+    .home-stat-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.1em;line-height:1.4}
+    .section-title{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.12em;padding:18px 20px 10px;
+      display:flex;align-items:center;gap:10px}
+    .section-title::after{content:'';flex:1;height:1px;background:var(--parchment)}
+    .cat-tabs{display:flex;gap:8px;padding:0 16px 14px;overflow-x:auto;scrollbar-width:none}
+    .cat-tabs::-webkit-scrollbar{display:none}
+    .cat-tab{flex-shrink:0;padding:7px 16px;border-radius:20px;border:1.5px solid var(--parchment);
+      background:transparent;color:var(--text-muted);font-family:'DM Mono',monospace;
+      font-size:12px;cursor:pointer;transition:all .2s}
+    .cat-tab.active{background:var(--brown-deep);border-color:var(--brown-deep);color:var(--cream)}
+    .recipe-list{padding:0 16px 100px;display:flex;flex-direction:column;gap:10px}
+    .recipe-card{background:white;border-radius:12px;padding:14px 16px;display:flex;
+      align-items:center;gap:12px;cursor:pointer;border:1px solid rgba(196,150,42,.2);
+      box-shadow:0 2px 8px var(--shadow);transition:all .2s;position:relative;overflow:hidden}
+    .recipe-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+      background:var(--gold);opacity:0;transition:opacity .2s}
+    .recipe-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px var(--shadow)}
+    .recipe-card:hover::before{opacity:1}
+    .recipe-card:active{transform:scale(.99)}
+    .recipe-emoji{font-size:30px;flex-shrink:0}
+    .recipe-info{flex:1;min-width:0}
+    .recipe-name{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;
+      color:var(--text-main);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .recipe-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);
+      display:flex;gap:10px;flex-wrap:wrap}
+    .recipe-arrow{color:var(--parchment);font-size:18px;flex-shrink:0}
+    .fab{position:fixed;bottom:24px;right:20px;width:54px;height:54px;border-radius:27px;
+      background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;
+      color:var(--brown-deep);font-size:28px;cursor:pointer;box-shadow:0 4px 20px rgba(196,150,42,.5);
+      z-index:50;transition:all .2s;display:flex;align-items:center;justify-content:center}
+    .fab:hover{transform:scale(1.08)} .fab:active{transform:scale(.96)}
+    .detail-wrapper{max-width:680px;margin:0 auto}
+    .recipe-detail-hero{background:linear-gradient(160deg,var(--brown-deep),var(--brown-mid));padding:22px 20px 18px}
+    .recipe-detail-emoji{font-size:48px;display:block;margin-bottom:8px}
+    .recipe-detail-title{font-family:'Playfair Display',serif;font-size:clamp(20px,5vw,26px);
+      font-weight:700;color:var(--cream);margin-bottom:4px}
+    .recipe-detail-cat{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold-light);
+      text-transform:uppercase;letter-spacing:.12em}
+    .detail-body{padding:0 16px}
+    .calc-panel{background:var(--brown-deep);margin:14px 0 0;border-radius:14px;padding:16px;
+      border:1px solid rgba(196,150,42,.3)}
+    .calc-panel-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold-light);
+      text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
+    .calc-modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .calc-mode-btn{padding:8px;border-radius:8px;border:1.5px solid rgba(196,150,42,.3);
+      background:transparent;color:var(--parchment);font-family:'DM Mono',monospace;
+      font-size:11px;cursor:pointer;transition:all .2s;text-align:center}
+    .calc-mode-btn.active{background:rgba(196,150,42,.2);border-color:var(--gold);color:var(--gold-light)}
+    .calc-row{display:flex;align-items:center;gap:8px;width:100%}
+    .calc-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--parchment);white-space:nowrap;flex-shrink:0}
+    .calc-input{flex:1;min-width:0;background:rgba(255,255,255,.08);border:1px solid rgba(196,150,42,.3);
+      border-radius:8px;padding:10px;color:var(--cream);font-family:'DM Mono',monospace;
+      font-size:14px;font-weight:500;text-align:right;outline:none;transition:border-color .2s;width:100%;box-sizing:border-box}
+    .calc-input:focus{border-color:var(--gold);background:rgba(255,255,255,.12)}
+    .calc-unit{font-family:'DM Mono',monospace;font-size:12px;color:var(--gold-light);min-width:24px;flex-shrink:0}
+    .pieces-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+    .pieces-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--parchment);
+      text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+    .quick-btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+    .quick-btn{padding:6px 12px;border-radius:16px;border:1px solid rgba(196,150,42,.3);
+      background:transparent;color:var(--gold-light);font-family:'DM Mono',monospace;
+      font-size:11px;cursor:pointer;transition:all .2s}
+    .quick-btn:hover{background:rgba(196,150,42,.2)} .quick-btn:active{transform:scale(.95)}
+    .grammage-select{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(196,150,42,.4);
+      border-radius:8px;padding:9px 10px;color:var(--cream);font-family:'DM Mono',monospace;
+      font-size:13px;outline:none;cursor:pointer;box-sizing:border-box}
+    .grammage-select option{background:var(--brown-deep);color:var(--cream)}
+    .corrector-trigger{display:flex;align-items:center;justify-content:space-between;
+      margin:12px 0 0;padding:11px 14px;border-radius:12px;
+      border:1.5px dashed rgba(196,150,42,.4);background:rgba(196,150,42,.05);
+      cursor:pointer;transition:all .2s}
+    .corrector-trigger:hover{background:rgba(196,150,42,.1);border-color:var(--gold)}
+    .corrector-trigger.active{border-style:solid;border-color:var(--gold);background:rgba(196,150,42,.1)}
+    .corrector-trigger-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+    .corrector-trigger-icon{font-size:18px;flex-shrink:0}
+    .corrector-trigger-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.08em;line-height:1.4;min-width:0}
+    .corrector-trigger-text strong{display:block;color:var(--gold);font-weight:500}
+    .corrector-chevron{color:var(--gold);font-size:14px;transition:transform .25s;flex-shrink:0;margin-left:8px}
+    .corrector-chevron.open{transform:rotate(180deg)}
+    .corrector-panel{background:#1E1008;border:1px solid rgba(196,150,42,.25);border-top:none;
+      border-radius:0 0 14px 14px;overflow:hidden;max-height:0;
+      transition:max-height .35s ease,padding .35s ease;padding:0 16px}
+    .corrector-panel.open{max-height:700px;padding:16px}
+    .corrector-panel-title{font-family:'DM Mono',monospace;font-size:10px;
+      color:rgba(232,184,75,.6);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
+    .corrector-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .corrector-field label{display:block;font-family:'DM Mono',monospace;font-size:10px;
+      color:var(--parchment);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+    .corrector-input{width:100%;box-sizing:border-box;background:rgba(255,255,255,.07);
+      border:1px solid rgba(196,150,42,.25);border-radius:8px;padding:9px 10px;
+      color:var(--cream);font-family:'DM Mono',monospace;font-size:14px;font-weight:500;
+      text-align:right;outline:none;transition:border-color .2s}
+    .corrector-input:focus{border-color:var(--gold-light)}
+    .th-corrector-block{border-top:1px solid rgba(196,150,42,.15);padding-top:12px;margin-bottom:14px}
+    .th-corrector-title{font-family:'DM Mono',monospace;font-size:10px;color:rgba(232,184,75,.6);
+      text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+    .th-corrector-row{display:flex;align-items:center;justify-content:space-between;gap:8px;
+      padding:8px 10px;background:rgba(255,255,255,.04);border-radius:8px;margin-bottom:6px}
+    .th-corrector-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--parchment)}
+    .th-corrector-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500}
+    .th-corrector-delta{font-family:'DM Mono',monospace;font-size:11px;padding:2px 7px;
+      border-radius:8px;min-width:50px;text-align:right}
+    .delta-neg{color:var(--orange);background:rgba(232,168,75,.12)}
+    .delta-pos{color:var(--green);background:rgba(126,200,138,.12)}
+    .delta-zero{color:rgba(255,255,255,.25)}
+    .corrector-result{border-top:1px solid rgba(196,150,42,.2);padding-top:12px;display:none}
+    .corrector-result.visible{display:block}
+    .corrector-result-title{font-family:'DM Mono',monospace;font-size:10px;
+      color:rgba(232,184,75,.7);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+    .corrector-adj-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+    .corrector-adj-name{font-family:'Lora',serif;font-size:13px;color:var(--parchment);flex:1;min-width:0}
+    .corrector-adj-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;text-align:right;min-width:70px;flex-shrink:0}
+    .corrector-adj-delta{font-family:'DM Mono',monospace;font-size:11px;min-width:54px;
+      text-align:right;padding:3px 7px;border-radius:10px;flex-shrink:0}
+    .corrector-disclaimer{margin-top:10px;font-family:'DM Mono',monospace;font-size:10px;
+      color:rgba(255,255,255,.25);font-style:italic;line-height:1.5;text-align:center}
+    .ingredients-section{padding-bottom:12px}
+    .pieces-info-box{background:white;border:1px solid rgba(196,150,42,.3);border-radius:10px;
+      padding:12px 14px;margin:12px 0 0;display:flex;justify-content:space-between;align-items:center}
+    .pieces-info-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.08em}
+    .pieces-info-val{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold)}
+    .pieces-info-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)}
+    .th-badge-row{background:rgba(196,150,42,.06);border:1px dashed rgba(196,150,42,.3);
+      border-radius:8px;padding:10px 14px;margin:10px 0;
+      display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+    .th-badge-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.08em}
+    .th-badge-val{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--gold)}
+    .th-badge-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)}
+    .ingredients-header{display:grid;grid-template-columns:1fr 90px 64px;gap:6px;
+      padding:10px 12px 6px;border-bottom:1px solid var(--parchment);margin-top:10px}
+    .col-head{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.1em}
+    .col-head.right{text-align:right}
+    .ingredient-row{display:grid;grid-template-columns:1fr 90px 64px;gap:6px;
+      padding:11px 12px;border-bottom:1px solid rgba(212,196,160,.3);align-items:center;transition:background .15s}
+    .ingredient-row:hover{background:rgba(212,196,160,.15);border-radius:8px}
+    .ingredient-row.farine{background:rgba(196,150,42,.07);border-radius:8px;border-bottom-color:rgba(196,150,42,.25)}
+    .ingredient-row.eau-auto{background:rgba(100,180,255,.05);border-bottom-color:rgba(100,180,255,.2)}
+    .ingredient-name{font-family:'Lora',serif;font-size:14px;color:var(--text-main);
+      min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .badge{display:inline-block;font-family:'DM Mono',monospace;font-size:9px;
+      background:var(--gold);color:var(--brown-deep);padding:1px 5px;border-radius:8px;margin-left:5px;font-weight:500}
+    .badge-auto{display:inline-block;font-family:'DM Mono',monospace;font-size:9px;
+      background:rgba(100,180,255,.2);color:#4a9abe;border:1px solid rgba(100,180,255,.35);
+      padding:1px 5px;border-radius:8px;margin-left:5px;font-weight:500}
+    .ingredient-qty{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text-main);text-align:right}
+    .ingredient-pct{font-family:'DM Mono',monospace;font-size:12px;color:var(--gold);text-align:right;font-weight:500}
+    .ingredient-pct.farine-pct{color:var(--text-muted);font-size:11px}
+    .ingredient-pct.eau-pct{color:#4a9abe}
+    .corrected-qty{color:var(--orange);font-weight:600}
+    .original-qty{font-size:10px;color:var(--text-muted);text-decoration:line-through;margin-left:3px}
+    .total-row{display:grid;grid-template-columns:1fr 90px 64px;gap:6px;
+      padding:12px 12px;background:var(--cream-dark);border-radius:10px;
+      margin-top:8px;border:1px solid var(--parchment)}
+    .total-label{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--text-main)}
+    .total-qty{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--brown-deep);text-align:right}
+    .notes-section{margin:14px 0;background:white;border-radius:12px;
+      border:1px solid rgba(196,150,42,.2);overflow:hidden}
+    .notes-header{display:flex;align-items:center;justify-content:space-between;
+      padding:12px 14px;cursor:pointer;border-bottom:1px solid transparent;transition:all .2s}
+    .notes-header:hover{background:rgba(196,150,42,.05)}
+    .notes-header.open{border-bottom-color:rgba(196,150,42,.2)}
+    .notes-header-left{display:flex;align-items:center;gap:8px}
+    .notes-header-icon{font-size:16px}
+    .notes-header-title{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.1em}
+    .notes-chevron{color:var(--parchment);font-size:12px;transition:transform .25s}
+    .notes-chevron.open{transform:rotate(180deg)}
+    .notes-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+    .notes-body.open{max-height:800px}
+    .notes-content{padding:14px;font-family:'Lora',serif;font-size:14px;
+      line-height:1.7;color:var(--text-main);white-space:pre-wrap;word-break:break-word}
+    .detail-actions{display:flex;gap:10px;padding:0 0 30px;justify-content:space-between;align-items:center;margin-top:6px}
+    .edit-btn{display:flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;
+      border:1.5px solid rgba(196,150,42,.4);background:rgba(196,150,42,.06);
+      color:var(--gold);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .2s}
+    .edit-btn:hover{background:rgba(196,150,42,.14);border-color:var(--gold)}
+    .del-action-btn{background:none;border:none;color:var(--rust);font-family:'DM Mono',monospace;
+      font-size:12px;cursor:pointer;padding:8px;opacity:.6;transition:opacity .2s}
+    .del-action-btn:hover{opacity:1}
+    .form-screen{padding:0 0 100px;max-width:680px;margin:0 auto}
+    .form-section{padding:18px 16px 0}
+    .form-section-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px;padding-bottom:8px;
+      border-bottom:1px solid var(--parchment)}
+    .form-group{margin-bottom:12px}
+    .form-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px}
+    .form-input{width:100%;padding:11px 13px;border:1.5px solid var(--parchment);border-radius:10px;
+      background:white;color:var(--text-main);font-family:'Lora',serif;font-size:14px;
+      outline:none;transition:border-color .2s;box-sizing:border-box}
+    .form-input:focus{border-color:var(--gold)}
+    .form-input::placeholder{color:var(--parchment)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .cat-select-group{display:flex;gap:8px}
+    .cat-select-btn{flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid var(--parchment);
+      background:white;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:12px;
+      cursor:pointer;text-align:center;transition:all .2s}
+    .cat-select-btn.active{border-color:var(--gold);background:rgba(196,150,42,.08);color:var(--brown-deep)}
+    .th-section{background:rgba(196,150,42,.05);border:1.5px dashed rgba(196,150,42,.35);
+      border-radius:12px;padding:14px;margin:0 16px}
+    .th-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .th-toggle-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)}
+    .toggle-switch{position:relative;width:44px;height:24px;cursor:pointer;flex-shrink:0}
+    .toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+    .toggle-track{position:absolute;inset:0;background:var(--parchment);border-radius:12px;transition:background .2s}
+    .toggle-switch input:checked+.toggle-track{background:var(--gold)}
+    .toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;background:white;
+      border-radius:50%;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+    .toggle-switch input:checked~.toggle-thumb{left:23px}
+    .th-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .th-inputs.single{grid-template-columns:1fr}
+    .th-preview{margin-top:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);
+      text-align:center;padding:6px;background:rgba(196,150,42,.08);border-radius:6px}
+    .eau-auto-preview{margin-top:10px;padding:10px 12px;background:rgba(100,180,255,.07);
+      border:1px solid rgba(100,180,255,.25);border-radius:8px;
+      font-family:'DM Mono',monospace;font-size:11px;color:#4a9abe;line-height:1.5;display:none}
+    .eau-auto-preview.visible{display:block}
+    .form-ingredients-section{padding:0 16px}
+    .ingredient-form-row{display:grid;grid-template-columns:1fr 68px 34px;gap:6px;
+      margin-bottom:7px;align-items:center}
+    .ing-input{padding:9px 10px;border:1.5px solid var(--parchment);border-radius:9px;
+      background:white;color:var(--text-main);font-family:'Lora',serif;font-size:14px;
+      outline:none;transition:border-color .2s;min-width:0;width:100%;box-sizing:border-box}
+    .ing-input:focus{border-color:var(--gold)}
+    .ing-input::placeholder{color:#ccc;font-size:12px}
+    .del-btn{width:34px;height:34px;border-radius:8px;border:1.5px solid rgba(160,82,45,.3);
+      background:transparent;color:var(--rust);font-size:16px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+    .del-btn:hover{background:rgba(160,82,45,.1)}
+    .add-ingredient-btn{width:100%;padding:11px;border:1.5px dashed var(--parchment);
+      border-radius:10px;background:transparent;color:var(--text-muted);
+      font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;margin-top:4px;transition:all .2s}
+    .add-ingredient-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(196,150,42,.04)}
+    .form-optional-block{margin:16px 16px 0;padding:14px;border:1.5px dashed var(--parchment);
+      border-radius:12px;background:rgba(212,196,160,.08)}
+    .form-optional-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .opt-badge{background:var(--parchment);color:var(--brown-deep);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:500}
+    .grammage-form-row{display:grid;grid-template-columns:1fr 72px 34px;gap:6px;margin-bottom:7px;align-items:center}
+    .notes-textarea{width:100%;padding:11px 13px;border:1.5px solid var(--parchment);
+      border-radius:10px;background:white;color:var(--text-main);font-family:'Lora',serif;
+      font-size:14px;line-height:1.7;outline:none;resize:vertical;min-height:120px;
+      transition:border-color .2s;box-sizing:border-box}
+    .notes-textarea:focus{border-color:var(--gold)}
+    .notes-textarea::placeholder{color:var(--parchment)}
+    .notes-hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);margin-top:5px;line-height:1.5}
+    .save-btn{margin:18px 16px 0;width:calc(100% - 32px);padding:15px;border-radius:12px;
+      border:none;background:linear-gradient(135deg,var(--brown-deep),var(--brown-mid));
+      color:var(--cream);font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+      cursor:pointer;box-shadow:0 4px 16px var(--shadow);transition:all .2s;letter-spacing:.03em}
+    .save-btn:hover{transform:translateY(-1px)} .save-btn:active{transform:scale(.98)}
+    .empty-state{text-align:center;padding:48px 24px;color:var(--text-muted)}
+    .empty-state-icon{font-size:48px;margin-bottom:14px;opacity:.5}
+    .empty-state h3{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:8px;color:var(--text-main)}
+    .empty-state p{font-family:'DM Mono',monospace;font-size:12px;line-height:1.6}
+    .toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(20px);
+      background:var(--brown-deep);color:var(--cream);padding:11px 22px;border-radius:22px;
+      font-family:'DM Mono',monospace;font-size:12px;border:1px solid var(--gold);
+      opacity:0;transition:all .3s;z-index:200;white-space:nowrap;pointer-events:none}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;
+      display:flex;align-items:center;justify-content:center;padding:24px;
+      opacity:0;pointer-events:none;transition:opacity .2s}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal-box{background:var(--cream);border-radius:16px;padding:26px 22px 20px;
+      width:100%;max-width:320px;box-shadow:0 12px 40px rgba(0,0,0,.4);
+      transform:translateY(12px);transition:transform .25s;border-top:3px solid var(--rust)}
+    .modal-overlay.open .modal-box{transform:translateY(0)}
+    .modal-icon{font-size:30px;margin-bottom:10px}
+    .modal-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--text-main);margin-bottom:7px}
+    .modal-body{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:18px}
+    .modal-body strong{color:var(--text-main)}
+    .modal-actions{display:flex;gap:10px}
+    .modal-btn{flex:1;padding:12px 8px;border-radius:10px;border:none;
+      font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+    .modal-btn-cancel{background:var(--cream-dark);color:var(--text-muted);border:1.5px solid var(--parchment)}
+    .modal-btn-cancel:hover{background:var(--parchment)}
+    .modal-btn-confirm{background:var(--rust);color:white}
+    .modal-btn-confirm:hover{background:#8B3A1A}
+    ::-webkit-scrollbar{width:3px}
+    ::-webkit-scrollbar-thumb{background:var(--parchment);border-radius:2px}
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">🥖 Four<span>nil</span> <span class="backup-badge">BACKUP v3</span></div>
+  <button class="header-back" id="backBtn" style="display:none" onclick="goHome()">← Retour</button>
+</header>
+
+<div class="screen active" id="screenHome">
+  <div class="home-hero">
+    <h1>Vos recettes<br/>professionnelles</h1>
+    <p>Boulangerie · Viennoiserie</p>
+  </div>
+  <div class="home-stat-bar">
+    <div class="home-stat-num" id="statTotal">0</div>
+    <div class="home-stat-txt">recette<span id="statPlural"></span><br/>enregistrée<span id="statPlural2"></span></div>
+  </div>
+  <div class="section-title">Catalogue</div>
+  <div class="cat-tabs">
+    <button class="cat-tab active" onclick="filterCat('all',this)">Tout</button>
+    <button class="cat-tab" onclick="filterCat('pain',this)">🥖 Pains</button>
+    <button class="cat-tab" onclick="filterCat('viennoiserie',this)">🥐 Viennoiseries</button>
+  </div>
+  <div class="recipe-list" id="recipeList"></div>
+</div>
+
+<div class="screen" id="screenDetail">
+  <div class="detail-wrapper">
+    <div class="recipe-detail-hero">
+      <span class="recipe-detail-emoji" id="detailEmoji">🥖</span>
+      <div class="recipe-detail-title" id="detailTitle">—</div>
+      <div class="recipe-detail-cat" id="detailCat">—</div>
+    </div>
+    <div class="detail-body">
+      <div class="calc-panel">
+        <div class="calc-panel-title">⚖ Calculateur de production</div>
+        <div class="calc-modes">
+          <button class="calc-mode-btn active" id="modePoidsBtn" onclick="setCalcMode('poids')">Poids farine</button>
+          <button class="calc-mode-btn" id="modePiecesBtn" onclick="setCalcMode('pieces')">Nb de pièces</button>
+        </div>
+        <div id="calcInputsPoids">
+          <div class="calc-row">
+            <span class="calc-label">Farine cible</span>
+            <input class="calc-input" type="number" id="inputFarine" placeholder="1000" oninput="recalculate()"/>
+            <span class="calc-unit">g</span>
+          </div>
+        </div>
+        <div id="calcInputsPieces" style="display:none">
+          <div class="pieces-grid">
+            <div>
+              <div class="pieces-label">Nb pièces</div>
+              <input class="calc-input" type="number" id="inputNbPieces" placeholder="24" oninput="recalcFromPieces()"/>
+            </div>
+            <div>
+              <div class="pieces-label">Poids / pièce (g)</div>
+              <select class="grammage-select" id="grammageSelect" onchange="onGrammageChange()" style="display:none"></select>
+              <input class="calc-input" type="number" id="inputPoidsPiece" placeholder="320" oninput="recalcFromPieces()"/>
+            </div>
+          </div>
+        </div>
+        <div class="quick-btns">
+          <button class="quick-btn" onclick="quickMult(.5)">× ½</button>
+          <button class="quick-btn" onclick="quickMult(1)">Origine</button>
+          <button class="quick-btn" onclick="quickMult(2)">× 2</button>
+          <button class="quick-btn" onclick="quickMult(3)">× 3</button>
+          <button class="quick-btn" onclick="quickMult(5)">× 5</button>
+        </div>
+      </div>
+      <div class="corrector-trigger" id="correctorTrigger" onclick="toggleCorrector()">
+        <div class="corrector-trigger-left">
+          <span class="corrector-trigger-icon">🌡</span>
+          <div class="corrector-trigger-text">
+            <strong>Ajuster aux conditions du jour</strong>
+            <span id="correctorTriggerSub">Température · Humidité</span>
+          </div>
+        </div>
+        <span class="corrector-chevron" id="correctorChevron">▾</span>
+      </div>
+      <div class="corrector-panel" id="correctorPanel">
+        <div class="corrector-panel-title">⚗ Correcteur — ajustement du jour, non sauvegardé</div>
+        <div class="corrector-inputs">
+          <div class="corrector-field">
+            <label>Temp. actuelle (°C)</label>
+            <input class="corrector-input" type="number" id="corrTempActuelle" placeholder="—" oninput="applyCorrector()"/>
+          </div>
+          <div class="corrector-field">
+            <label>Humidité atelier (%)</label>
+            <input class="corrector-input" type="number" id="corrHumActuelle" placeholder="—" oninput="applyCorrector()"/>
+          </div>
+        </div>
+        <div class="th-corrector-block" id="thCorrectorBlock" style="display:none">
+          <div class="th-corrector-title">💧 Taux d'hydratation & eau ajustés</div>
+          <div id="thCorrectorRows"></div>
+        </div>
+        <div class="corrector-result" id="correctorResult">
+          <div class="corrector-result-title">Ajustements liquides</div>
+          <div id="correctorAdjustments"></div>
+          <div class="corrector-disclaimer">Recette de base inchangée — ajustement session uniquement</div>
+        </div>
+      </div>
+      <div class="ingredients-section">
+        <div class="pieces-info-box" id="piecesInfoBox" style="display:none">
+          <div>
+            <div class="pieces-info-label">Production estimée</div>
+            <div class="pieces-info-sub" id="piecesInfoSub">—</div>
+          </div>
+          <div class="pieces-info-val" id="piecesInfoVal">—</div>
+        </div>
+        <div class="th-badge-row" id="thBadgeRow" style="display:none">
+          <div>
+            <div class="th-badge-label">Taux d'hydratation</div>
+            <div class="th-badge-sub" id="thBadgeSub">—</div>
+          </div>
+          <div class="th-badge-val" id="thBadgeVal">—</div>
+        </div>
+        <div class="section-title" style="padding-left:0">Ingrédients</div>
+        <div class="ingredients-header">
+          <div class="col-head">Ingrédient</div>
+          <div class="col-head right">Quantité</div>
+          <div class="col-head right">% 🌾</div>
+        </div>
+        <div id="ingredientRows"></div>
+        <div class="total-row">
+          <div class="total-label">Total pâte</div>
+          <div class="total-qty" id="totalQty">—</div>
+          <div></div>
+        </div>
+      </div>
+      <div class="notes-section" id="notesSectionEl" style="display:none">
+        <div class="notes-header" id="notesHeaderEl" onclick="toggleNotes()">
+          <div class="notes-header-left">
+            <span class="notes-header-icon">📝</span>
+            <span class="notes-header-title">Méthode & Notes</span>
+          </div>
+          <span class="notes-chevron" id="notesChevron">▾</span>
+        </div>
+        <div class="notes-body" id="notesBodyEl">
+          <div class="notes-content" id="notesContentEl"></div>
+        </div>
+      </div>
+      <div class="detail-actions">
+        <button class="edit-btn" onclick="editCurrentRecipe()">✏ Modifier la recette</button>
+        <button class="del-action-btn" onclick="deleteCurrentRecipe()">🗑 Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screenForm">
+  <div class="form-screen">
+    <div class="form-section">
+      <div class="form-section-title" id="formScreenTitle">Nouvelle recette</div>
+      <div class="form-group">
+        <label class="form-label">Nom de la recette *</label>
+        <input class="form-input" type="text" id="formName" placeholder="ex : Pain de campagne"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catégorie</label>
+        <div class="cat-select-group">
+          <button class="cat-select-btn active" id="catBtnPain" onclick="selectCat('pain')">🥖 Pain</button>
+          <button class="cat-select-btn" id="catBtnViennoiserie" onclick="selectCat('viennoiserie')">🥐 Viennoiserie</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Poids pièce (g)</label>
+          <input class="form-input" type="number" id="formPoidsPiece" placeholder="320"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nb pièces base</label>
+          <input class="form-input" type="number" id="formNbPieces" placeholder="12"/>
+        </div>
+      </div>
+    </div>
+    <div class="form-section" style="padding-top:18px">
+      <div class="form-section-title">Taux d'hydratation (TH) <span style="font-size:10px;color:var(--parchment);text-transform:none;letter-spacing:0;font-style:italic">(optionnel)</span></div>
+    </div>
+    <div class="th-section">
+      <div class="th-toggle-row">
+        <span class="th-toggle-label">Définir une fourchette de TH</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="thRangeToggle" onchange="onThRangeToggle()"/>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="th-inputs single" id="thInputsContainer">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" id="thMinLabel">TH (%)</label>
+          <input class="form-input" type="number" id="formThMin" placeholder="ex : 72" min="0" max="200" oninput="updateThPreview()"/>
+        </div>
+        <div class="form-group" style="margin-bottom:0;display:none" id="thMaxGroup">
+          <label class="form-label">TH max (%)</label>
+          <input class="form-input" type="number" id="formThMax" placeholder="ex : 76" min="0" max="200" oninput="updateThPreview()"/>
+        </div>
+      </div>
+      <div class="th-preview" id="thPreview" style="display:none"></div>
+      <div class="eau-auto-preview" id="eauAutoPreview" style="display:none"></div>
+    </div>
+    <div class="form-optional-block">
+      <div class="form-optional-title">
+        🌡 Conditions de référence <span class="opt-badge">OPTIONNEL</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Temp. de référence (°C)</label>
+          <input class="form-input" type="number" id="formTempRef" placeholder="ex : 20"/>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Humidité de référence (%)</label>
+          <input class="form-input" type="number" id="formHumRef" placeholder="ex : 60"/>
+        </div>
+      </div>
+    </div>
+    <div class="form-section" style="padding-top:18px">
+      <div class="form-section-title">Grammages prédéfinis <span style="font-size:10px;color:var(--parchment);text-transform:none;letter-spacing:0;font-style:italic">(optionnel)</span></div>
+    </div>
+    <div class="form-ingredients-section">
+      <div style="display:grid;grid-template-columns:1fr 72px 34px;gap:6px;margin-bottom:5px">
+        <div class="col-head">Label</div><div class="col-head right">Poids (g)</div><div></div>
+      </div>
+      <div id="formGrammages"></div>
+      <button class="add-ingredient-btn" onclick="addGrammageRow()">+ Ajouter un grammage</button>
+    </div>
+    <div class="form-section" style="padding-top:18px">
+      <div class="form-section-title">Ingrédients * <span style="font-size:10px;color:var(--parchment);text-transform:none;letter-spacing:0;font-style:italic">(si pas de TH, saisir l'eau manuellement)</span></div>
+    </div>
+    <div class="form-ingredients-section">
+      <div style="display:grid;grid-template-columns:1fr 68px 34px;gap:6px;margin-bottom:5px">
+        <div class="col-head">Nom</div><div class="col-head right">Poids (g)</div><div></div>
+      </div>
+      <div id="formIngredients"></div>
+      <button class="add-ingredient-btn" onclick="addIngredientRow()">+ Ajouter un ingrédient</button>
+    </div>
+    <div class="form-section" style="padding-top:18px">
+      <div class="form-section-title">Notes & Méthode <span style="font-size:10px;color:var(--parchment);text-transform:none;letter-spacing:0;font-style:italic">(optionnel)</span></div>
+      <div class="form-group" style="margin-bottom:0">
+        <textarea class="notes-textarea" id="formNotes"
+          placeholder="Ex :&#10;1. Autolyse 30 min&#10;2. Pétrissage 1ère vit. 4 min → 2ème vit. 8 min&#10;3. Pointage 2h à 24°C (rabat à 1h)&#10;4. Division, façonnage, apprêt 1h30&#10;5. Cuisson 250°C → 220°C, 25 min, buée"></textarea>
+        <div class="notes-hint">Méthode, vitesses de pétrin, temps de fermentation, températures…</div>
+      </div>
+    </div>
+    <button class="save-btn" id="saveBtnLabel" onclick="saveRecipe()">Enregistrer la recette</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-icon">🗑</div>
+    <div class="modal-title">Supprimer la recette ?</div>
+    <div class="modal-body">Action <strong>irréversible</strong>. La recette <strong id="modalRecipeName">—</strong> sera définitivement supprimée.</div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="modal-btn modal-btn-confirm" onclick="confirmDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="fab" onclick="goForm()" title="Nouvelle recette">+</button>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ STATE ══
+// Backup uses its own localStorage key to avoid conflicts with the main app
+let recipes = JSON.parse(localStorage.getItem('fournil_v4') || '[]');
+let cur=null,curFarine=0,curCat='all',calcMode='poids';
+let formCat='pain',formIngRows=[],formGramRows=[],editingId=null;
+let corrOpen=false,corrEauDelta=0;
+let rowId=0,gramId=0,notesOpen=false;
+
+if(!recipes.length){
+  recipes=[
+    {id:1,name:'Baguette Tradition',cat:'pain',poidsPiece:250,nbPieces:20,thMin:62,thMax:65,tempRef:20,humRef:60,
+      notes:'1. Autolyse 40 min\n2. Pétrissage 1ère vit. 4 min → 2ème vit. 8 min (T°pâte cible 24°C)\n3. Pointage 2h à 24°C (rabat 1h)\n4. Division, façonnage, apprêt 1h en couche\n5. Cuisson 250°C, 22 min, buée',
+      grammages:[{label:'Baguette 250g',g:250},{label:'Ficelle 160g',g:160}],
+      ingredients:[{nom:'Farine T65',g:1000,isFarine:true},{nom:'Sel',g:20,isFarine:false},{nom:'Levure fraîche',g:7,isFarine:false}]},
+    {id:2,name:'Croissant Pur Beurre',cat:'viennoiserie',poidsPiece:90,nbPieces:24,thMin:50,thMax:null,tempRef:18,humRef:55,
+      notes:'1. Détrempe → repos 30 min réfrigérateur\n2. Tourage 3 tours simples\n3. Abaisse 3mm, découpe triangles\n4. Façonnage, pousse 2h à 26°C\n5. Dorure × 2\n6. Cuisson 175°C, 18 min ventilé',
+      grammages:[{label:'Croissant 90g',g:90},{label:'Mini 55g',g:55}],
+      ingredients:[{nom:'Farine T45',g:1000,isFarine:true},{nom:'Lait entier',g:500,isFarine:false},{nom:'Sucre',g:100,isFarine:false},{nom:'Sel',g:18,isFarine:false},{nom:'Levure fraîche',g:35,isFarine:false},{nom:'Beurre (détrempe)',g:80,isFarine:false},{nom:'Beurre (tourage)',g:500,isFarine:false}]},
+    {id:3,name:'Pain de Campagne',cat:'pain',poidsPiece:500,nbPieces:8,thMin:70,thMax:75,tempRef:20,humRef:65,
+      notes:'1. Mélange farine + levain + eau → repos 1h\n2. Ajout sel, pétrissage léger\n3. Pointage 4h à 22°C (3 rabats)\n4. Mise en forme, banneton\n5. Fermentation retardée 12h au froid\n6. Cuisson cocotte 250°C : 20 min couvert + 20 min découvert',
+      grammages:[{label:'Miche 500g',g:500},{label:'Grand pain 800g',g:800}],
+      ingredients:[{nom:'Farine T80',g:800,isFarine:true},{nom:'Farine de Seigle',g:200,isFarine:false},{nom:'Sel',g:20,isFarine:false},{nom:'Levain liquide',g:200,isFarine:false}]},
+  ];
+}
+
+function save(){localStorage.setItem('fournil_v4',JSON.stringify(recipes));}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function getFarine(r){const f=r.ingredients.find(i=>i.isFarine);return f?f.g:1;}
+function fmtQty(g){if(g>=1000)return(g/1000).toFixed(3).replace(/\.?0+$/,'')+' kg';if(g>=100)return Math.round(g)+' g';return g.toFixed(1)+' g';}
+function pct(g,f){return((g/f)*100).toFixed(1);}
+const EMOJI={pain:'🥖',viennoiserie:'🥐'};
+const CATS={pain:'Pains & baguettes',viennoiserie:'Viennoiseries'};
+function thLabel(r){if(!r.thMin)return null;return r.thMax?`${r.thMin}–${r.thMax}%`:`${r.thMin}%`;}
+function thSub(r){if(!r.thMin)return null;return r.thMax?`Fourchette ${r.thMax-r.thMin} pts`:'TH unique';}
+function calcEau(r,ratio,thOverride){const farine=getFarine(r)*ratio;const th=thOverride!=null?thOverride:r.thMin;if(!th)return null;return farine*(th/100);}
+
+function renderHome(){
+  const n=recipes.length;
+  document.getElementById('statTotal').textContent=n;
+  document.getElementById('statPlural').textContent=n>1?'s':'';
+  document.getElementById('statPlural2').textContent=n>1?'s':'';
+  const list=document.getElementById('recipeList');
+  const fil=curCat==='all'?recipes:recipes.filter(r=>r.cat===curCat);
+  if(!fil.length){list.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📋</div><h3>Aucune recette</h3><p>Appuyez sur + pour créer<br/>votre première recette</p></div>`;return;}
+  list.innerHTML=fil.map(r=>{const f=getFarine(r);const th=thLabel(r);return`<div class="recipe-card" onclick="openRecipe(${r.id})"><span class="recipe-emoji">${EMOJI[r.cat]||'🍞'}</span><div class="recipe-info"><div class="recipe-name">${r.name}</div><div class="recipe-meta"><span>🌾 ${f>=1000?(f/1000)+'kg':f+'g'}</span>${th?`<span>💧 TH ${th}</span>`:''} ${r.poidsPiece?`<span>×${r.nbPieces||'?'} pcs</span>`:''}</div></div><span class="recipe-arrow">›</span></div>`;}).join('');
+}
+function filterCat(cat,btn){curCat=cat;document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHome();}
+
+function openRecipe(id){
+  cur=recipes.find(r=>r.id===id);if(!cur)return;
+  curFarine=getFarine(cur);corrEauDelta=0;corrOpen=false;notesOpen=false;
+  document.getElementById('detailEmoji').textContent=EMOJI[cur.cat]||'🍞';
+  document.getElementById('detailTitle').textContent=cur.name;
+  document.getElementById('detailCat').textContent=CATS[cur.cat]||'';
+  const panel=document.getElementById('correctorPanel');
+  panel.classList.remove('open');
+  document.getElementById('correctorChevron').classList.remove('open');
+  document.getElementById('correctorTrigger').classList.remove('active');
+  document.getElementById('correctorResult').classList.remove('visible');
+  document.getElementById('corrTempActuelle').value='';
+  document.getElementById('corrHumActuelle').value='';
+  document.getElementById('thCorrectorBlock').style.display='none';
+  const hasRef=cur.tempRef!=null&&cur.humRef!=null;
+  document.getElementById('correctorTriggerSub').textContent=hasRef?`Réf : ${cur.tempRef}°C · ${cur.humRef}% HR`:'Définir les conditions à la création';
+  document.getElementById('correctorTrigger').style.opacity=hasRef?'1':'.5';
+  document.getElementById('correctorTrigger').style.pointerEvents=hasRef?'auto':'none';
+  const thl=thLabel(cur);
+  const thBadge=document.getElementById('thBadgeRow');
+  if(thl){thBadge.style.display='flex';document.getElementById('thBadgeVal').textContent=thl;document.getElementById('thBadgeSub').textContent=thSub(cur);}
+  else thBadge.style.display='none';
+  const notesSec=document.getElementById('notesSectionEl');
+  if(cur.notes&&cur.notes.trim()){notesSec.style.display='block';document.getElementById('notesContentEl').textContent=cur.notes;document.getElementById('notesBodyEl').classList.remove('open');document.getElementById('notesChevron').classList.remove('open');document.getElementById('notesHeaderEl').classList.remove('open');}
+  else notesSec.style.display='none';
+  document.getElementById('inputFarine').value=curFarine;
+  document.getElementById('inputNbPieces').value=cur.nbPieces||'';
+  document.getElementById('inputPoidsPiece').value=cur.poidsPiece||'';
+  setCalcMode('poids');initGrammageSelect();renderIngredients(1);
+  showScreen('screenDetail');
+}
+function toggleNotes(){notesOpen=!notesOpen;document.getElementById('notesBodyEl').classList.toggle('open',notesOpen);document.getElementById('notesChevron').classList.toggle('open',notesOpen);document.getElementById('notesHeaderEl').classList.toggle('open',notesOpen);}
+
+function setCalcMode(m){calcMode=m;document.getElementById('calcInputsPoids').style.display=m==='poids'?'block':'none';document.getElementById('calcInputsPieces').style.display=m==='pieces'?'block':'none';document.getElementById('modePoidsBtn').classList.toggle('active',m==='poids');document.getElementById('modePiecesBtn').classList.toggle('active',m==='pieces');m==='poids'?recalculate():recalcFromPieces();}
+function recalculate(){if(!cur)return;const nf=parseFloat(document.getElementById('inputFarine').value)||curFarine;const ratio=nf/curFarine;renderIngredients(ratio);if(cur.grammages&&cur.grammages.length){const g=cur.grammages[0];const total=cur.ingredients.reduce((s,i)=>s+i.g*ratio,0)+(calcEau(cur,ratio,null)||0);const nb=Math.floor(total/g.g);document.getElementById('piecesInfoBox').style.display='flex';document.getElementById('piecesInfoVal').textContent=nb+' pcs';document.getElementById('piecesInfoSub').textContent=`${g.label} · ${fmtQty(total)} pâte`;}else document.getElementById('piecesInfoBox').style.display='none';}
+function initGrammageSelect(){if(!cur)return;const g=cur.grammages||[];const sel=document.getElementById('grammageSelect');const inp=document.getElementById('inputPoidsPiece');if(!g.length){sel.style.display='none';inp.style.display='block';return;}sel.innerHTML=g.map(gr=>`<option value="${gr.g}">${gr.label} — ${gr.g}g</option>`).join('')+`<option value="custom">✎ Autre…</option>`;sel.value=g[0].g;inp.value=g[0].g;sel.style.display='block';inp.style.display='none';}
+function onGrammageChange(){const sel=document.getElementById('grammageSelect');const inp=document.getElementById('inputPoidsPiece');if(sel.value==='custom'){inp.value='';sel.style.display='none';inp.style.display='block';inp.focus();}else inp.value=sel.value;recalcFromPieces();}
+function recalcFromPieces(){if(!cur)return;const nb=parseFloat(document.getElementById('inputNbPieces').value);const pp=parseFloat(document.getElementById('inputPoidsPiece').value);if(!nb||!pp){document.getElementById('piecesInfoBox').style.display='none';return;}const th=cur.thMin||0;const f=curFarine;const nonLiq=cur.ingredients.filter(i=>!i.isFarine).reduce((s,i)=>s+i.g,0);const basePateParRatio=f*(1+th/100)+nonLiq;const ratio=basePateParRatio>0?(nb*pp)/basePateParRatio:1;document.getElementById('inputFarine').value=Math.round(f*ratio);renderIngredients(ratio);document.getElementById('piecesInfoBox').style.display='flex';document.getElementById('piecesInfoVal').textContent=nb+' pcs';document.getElementById('piecesInfoSub').textContent=`${pp}g/pcs · ${fmtQty(nb*pp)} pâte`;}
+function quickMult(f){if(!cur)return;document.getElementById('inputFarine').value=Math.round(curFarine*f);recalculate();}
+
+function renderIngredients(ratio,thOverride){
+  if(!cur)return;
+  const bf=curFarine;let total=0;let html='';
+  const thForCalc=thOverride!=null?thOverride:cur.thMin;
+  const farine=cur.ingredients.find(i=>i.isFarine);
+  if(farine){const qty=farine.g*ratio;total+=qty;html+=`<div class="ingredient-row farine"><div class="ingredient-name">${farine.nom}<span class="badge">🌾 BASE</span></div><div class="ingredient-qty">${fmtQty(qty)}</div><span class="ingredient-pct farine-pct">100%</span></div>`;}
+  if(thForCalc){
+    const eauBase=calcEau(cur,ratio,null);
+    const eauCorr=corrEauDelta!==0?eauBase+corrEauDelta:null;
+    const eauDisplay=eauCorr!==null?eauCorr:eauBase;
+    const eauPct=pct(eauBase,bf*ratio);
+    total+=eauDisplay;
+    let qtyCell;
+    if(eauCorr!==null&&Math.abs(corrEauDelta)>0.5){qtyCell=`<div class="ingredient-qty"><span class="corrected-qty">${fmtQty(eauDisplay)}</span><span class="original-qty">${fmtQty(eauBase)}</span></div>`;}
+    else{qtyCell=`<div class="ingredient-qty">${fmtQty(eauBase)}</div>`;}
+    let eauInfo='';
+    if(cur.thMax&&cur.thMax!==cur.thMin){
+      const thDeltaPts=corrEauDelta!==0?(corrEauDelta/(curFarine*ratio))*100:0;
+      const eauMax=calcEau(cur,ratio,cur.thMax)+(thDeltaPts!==0?(thDeltaPts/100)*(curFarine*ratio):0);
+      eauInfo=`<div class="ingredient-name" style="font-size:11px;color:var(--text-muted);margin-top:2px;font-family:'DM Mono',monospace;">max ${fmtQty(eauMax)}</div>`;
+    }
+    html+=`<div class="ingredient-row eau-auto"><div><div class="ingredient-name">Eau<span class="badge-auto">💧 AUTO</span></div>${eauInfo}</div>${qtyCell}<span class="ingredient-pct eau-pct">${eauPct}%</span></div>`;
+  }
+  const EAU_RE=/^eau$/i;
+  const others=cur.ingredients.filter(i=>!i.isFarine);
+  const eauManuelle=!thForCalc?others.find(i=>EAU_RE.test(i.nom.trim())):null;
+  const reste=others.filter(i=>i!==eauManuelle);
+  if(eauManuelle){
+    const qtyBase=eauManuelle.g*ratio;
+    const qtyCorr=corrEauDelta!==0?qtyBase+corrEauDelta:null;
+    const qtyDisplay=qtyCorr!==null?qtyCorr:qtyBase;
+    total+=qtyDisplay;
+    const pctStr=pct(eauManuelle.g,bf);
+    let qtyCell;
+    if(qtyCorr!==null&&Math.abs(corrEauDelta)>0.5){qtyCell=`<div class="ingredient-qty"><span class="corrected-qty">${fmtQty(qtyDisplay)}</span><span class="original-qty">${fmtQty(qtyBase)}</span></div>`;}
+    else{qtyCell=`<div class="ingredient-qty">${fmtQty(qtyBase)}</div>`;}
+    html+=`<div class="ingredient-row eau-auto"><div><div class="ingredient-name">${eauManuelle.nom}<span class="badge-auto">💧 MANUEL</span></div></div>${qtyCell}<span class="ingredient-pct eau-pct">${pctStr}%</span></div>`;
+  }
+  reste.forEach(ing=>{const qty=ing.g*ratio;total+=qty;const pctStr=pct(ing.g,bf);html+=`<div class="ingredient-row"><div class="ingredient-name">${ing.nom}</div><div class="ingredient-qty">${fmtQty(qty)}</div><span class="ingredient-pct">${pctStr}%</span></div>`;});
+  document.getElementById('ingredientRows').innerHTML=html;
+  document.getElementById('totalQty').textContent=fmtQty(total);
+}
+
+function toggleCorrector(){
+  if(!cur)return;
+  if(!(cur.tempRef!=null&&cur.humRef!=null)){toast('⚠ Définissez les conditions de référence à la création');return;}
+  corrOpen=!corrOpen;
+  document.getElementById('correctorPanel').classList.toggle('open',corrOpen);
+  document.getElementById('correctorChevron').classList.toggle('open',corrOpen);
+  document.getElementById('correctorTrigger').classList.toggle('active',corrOpen);
+  if(!corrOpen){corrEauDelta=0;document.getElementById('corrTempActuelle').value='';document.getElementById('corrHumActuelle').value='';renderIngredients(getRatio());document.getElementById('correctorResult').classList.remove('visible');document.getElementById('thCorrectorBlock').style.display='none';}
+  else{applyCorrector();}
+}
+function getRatio(){return(parseFloat(document.getElementById('inputFarine').value)||curFarine)/curFarine;}
+function applyCorrector(){
+  if(!cur)return;
+  const ta=parseFloat(document.getElementById('corrTempActuelle').value);
+  const ha=parseFloat(document.getElementById('corrHumActuelle').value);
+  if(isNaN(ta)&&isNaN(ha)){corrEauDelta=0;document.getElementById('correctorResult').classList.remove('visible');document.getElementById('thCorrectorBlock').style.display='none';renderIngredients(getRatio());return;}
+  const ratio=getRatio();
+  const dT=isNaN(ta)?0:(ta-cur.tempRef);
+  const dH=isNaN(ha)?0:(ha-cur.humRef);
+  const thDelta=-(dT/5)*1.0-(dH/10)*0.5;
+  const farineS=curFarine*ratio;
+  if(cur.thMin){corrEauDelta=(thDelta/100)*farineS;}
+  else{const EAU_RE=/^eau$/i;const eauIng=cur.ingredients.find(i=>!i.isFarine&&EAU_RE.test(i.nom.trim()));if(eauIng){corrEauDelta=(thDelta/100)*farineS;}else{corrEauDelta=0;}}
+  const EAU_RE_C=/^eau$/i;
+  const eauIngCorr=!cur.thMin?cur.ingredients.find(i=>!i.isFarine&&EAU_RE_C.test(i.nom.trim())):null;
+  const hasThOrEau=cur.thMin||eauIngCorr;
+  if(hasThOrEau){
+    document.getElementById('thCorrectorBlock').style.display='block';
+    const sign=thDelta>=0?'+':'';
+    const clsD=thDelta<-0.1?'delta-neg':thDelta>0.1?'delta-pos':'delta-zero';
+    const eauBase=cur.thMin?calcEau(cur,ratio,null):eauIngCorr.g*ratio;
+    const eauCorr=eauBase+corrEauDelta;
+    let thRows='';
+    if(cur.thMin){const refStr=cur.thMax?`${cur.thMin}–${cur.thMax}%`:`${cur.thMin}%`;const adjMin=(cur.thMin+thDelta).toFixed(1);const adjMax=cur.thMax?(cur.thMax+thDelta).toFixed(1):null;const adjStr=adjMax?`${adjMin}–${adjMax}%`:`${adjMin}%`;thRows=`<div class="th-corrector-row"><span class="th-corrector-label">TH référence</span><span class="th-corrector-val" style="color:var(--parchment)">${refStr}</span><span class="th-corrector-delta delta-zero">base</span></div><div class="th-corrector-row"><span class="th-corrector-label">TH aujourd'hui</span><span class="th-corrector-val" style="color:${thDelta<-0.1?'var(--orange)':thDelta>0.1?'var(--green)':'var(--cream)'}">${adjStr}</span><span class="th-corrector-delta ${clsD}">${sign}${thDelta.toFixed(1)} pt</span></div>`;}
+    thRows+=`<div class="th-corrector-row"><span class="th-corrector-label">Eau ajustée</span><span class="th-corrector-val" style="color:${corrEauDelta<-0.5?'var(--orange)':corrEauDelta>0.5?'var(--green)':'var(--cream)'}">${fmtQty(eauCorr)}</span><span class="th-corrector-delta ${corrEauDelta<-0.5?'delta-neg':corrEauDelta>0.5?'delta-pos':'delta-zero'}">${corrEauDelta>0.5?'+':''}${fmtQty(Math.abs(corrEauDelta))}</span></div>`;
+    document.getElementById('thCorrectorRows').innerHTML=thRows;
+    document.getElementById('correctorResult').classList.remove('visible');
+  }else{document.getElementById('thCorrectorBlock').style.display='none';document.getElementById('correctorResult').classList.add('visible');document.getElementById('correctorAdjustments').innerHTML=`<div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.4);padding:6px 0">Définissez un TH ou ajoutez un ingrédient "Eau" pour bénéficier du correcteur.</div>`;}
+  renderIngredients(ratio);
+}
+
+function deleteCurrentRecipe(){if(!cur)return;document.getElementById('modalRecipeName').textContent=cur.name;document.getElementById('modalOverlay').classList.add('open');}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function confirmDelete(){if(!cur)return;closeModal();recipes=recipes.filter(r=>r.id!==cur.id);save();toast('🗑 Recette supprimée');goHome();}
+function editCurrentRecipe(){if(cur)goForm(cur);}
+
+function goForm(recipe=null){
+  editingId=recipe?recipe.id:null;formCat=recipe?recipe.cat:'pain';
+  document.getElementById('formScreenTitle').textContent=editingId?'Modifier la recette':'Nouvelle recette';
+  document.getElementById('saveBtnLabel').textContent=editingId?'Enregistrer les modifications':'Enregistrer la recette';
+  document.getElementById('formName').value=recipe?.name||'';
+  document.getElementById('formPoidsPiece').value=recipe?.poidsPiece||'';
+  document.getElementById('formNbPieces').value=recipe?.nbPieces||'';
+  document.getElementById('formTempRef').value=recipe?.tempRef??'';
+  document.getElementById('formHumRef').value=recipe?.humRef??'';
+  document.getElementById('formNotes').value=recipe?.notes||'';
+  document.getElementById('formThMin').value=recipe?.thMin||'';
+  document.getElementById('formThMax').value=recipe?.thMax||'';
+  const isRange=!!(recipe?.thMax);document.getElementById('thRangeToggle').checked=isRange;onThRangeToggle();updateThPreview();
+  document.getElementById('catBtnPain').classList.toggle('active',formCat==='pain');
+  document.getElementById('catBtnViennoiserie').classList.toggle('active',formCat==='viennoiserie');
+  document.getElementById('formGrammages').innerHTML='';formGramRows=[];
+  (recipe?.grammages||[]).forEach(g=>addGrammageRow(g.label,g.g));
+  document.getElementById('formIngredients').innerHTML='';formIngRows=[];
+  const ings=recipe?.ingredients?.filter(i=>!i.eauAuto)||[];
+  if(ings.length){ings.forEach((ing,i)=>addIngredientRow(i===0,ing.nom,ing.g));}
+  else{addIngredientRow(true);addIngredientRow(false);addIngredientRow(false);}
+  showScreen('screenForm');
+}
+function selectCat(cat){formCat=cat;document.getElementById('catBtnPain').classList.toggle('active',cat==='pain');document.getElementById('catBtnViennoiserie').classList.toggle('active',cat==='viennoiserie');}
+function onThRangeToggle(){const isRange=document.getElementById('thRangeToggle').checked;document.getElementById('thMaxGroup').style.display=isRange?'':'none';document.getElementById('thInputsContainer').className='th-inputs'+(isRange?'':' single');document.getElementById('thMinLabel').textContent=isRange?'TH min (%)':'TH (%)';updateThPreview();}
+function updateThPreview(){const min=parseFloat(document.getElementById('formThMin').value);const max=parseFloat(document.getElementById('formThMax').value);const prev=document.getElementById('thPreview');const isRange=document.getElementById('thRangeToggle').checked;if(!min){prev.style.display='none';return;}prev.style.display='block';if(isRange&&max>min)prev.textContent=`💧 TH entre ${min}% et ${max}% — fourchette de ${(max-min).toFixed(1)} pts`;else prev.textContent=`💧 TH : ${min}%`;}
+function addGrammageRow(label='',g=''){const id=++gramId;formGramRows.push(id);const div=document.createElement('div');div.className='grammage-form-row';div.id=`gram_${id}`;div.innerHTML=`<input class="ing-input" type="text" id="gramLbl_${id}" placeholder="ex : Baguette" value="${label}"/><input class="ing-input" type="number" id="gramG_${id}" placeholder="g" value="${g}" style="text-align:right"/><button class="del-btn" onclick="removeGram(${id})">×</button>`;document.getElementById('formGrammages').appendChild(div);}
+function removeGram(id){document.getElementById(`gram_${id}`)?.remove();formGramRows=formGramRows.filter(i=>i!==id);}
+function addIngredientRow(isFarine=false,name='',qty=''){const id=++rowId;formIngRows.push(id);const div=document.createElement('div');div.className='ingredient-form-row';div.id=`row_${id}`;div.innerHTML=`<input class="ing-input" type="text" id="name_${id}" placeholder="${isFarine?'Farine (base 🌾)':'Ingrédient (ex : Sel, Levure…)'}" value="${name}" style="${isFarine?'font-weight:600':''}"/><input class="ing-input" type="number" id="qty_${id}" placeholder="g" value="${qty}" style="text-align:right"/><button class="del-btn" onclick="removeRow(${id})">×</button>`;document.getElementById('formIngredients').appendChild(div);}
+function removeRow(id){document.getElementById(`row_${id}`)?.remove();formIngRows=formIngRows.filter(i=>i!==id);}
+function saveRecipe(){
+  const name=document.getElementById('formName').value.trim();if(!name){toast('⚠ Nom de la recette manquant');return;}
+  const thMin=parseFloat(document.getElementById('formThMin').value)||null;
+  const thMax=document.getElementById('thRangeToggle').checked?parseFloat(document.getElementById('formThMax').value)||null:null;
+  const ingredients=[];let hasBase=false;
+  for(let i=0;i<formIngRows.length;i++){const id=formIngRows[i];const n=(document.getElementById(`name_${id}`)?.value||'').trim();const g=parseFloat(document.getElementById(`qty_${id}`)?.value||'');if(!n&&!g)continue;if(i===0&&(!n||!g)){toast('⚠ Farine de base obligatoire');return;}if(n&&g){ingredients.push({nom:n,g,isFarine:i===0});if(i===0)hasBase=true;}else if(n||g){toast(`⚠ Champ incomplet : "${n||'?'}"`);return;}}
+  if(!hasBase){toast('⚠ Ajoutez au moins la farine de base');return;}
+  const grammages=[];for(const id of formGramRows){const lbl=(document.getElementById(`gramLbl_${id}`)?.value||'').trim();const g=parseFloat(document.getElementById(`gramG_${id}`)?.value||'');if(lbl&&g>0)grammages.push({label:lbl,g});}
+  const rec={id:editingId||Date.now(),name,cat:formCat,poidsPiece:parseFloat(document.getElementById('formPoidsPiece').value)||null,nbPieces:parseInt(document.getElementById('formNbPieces').value)||null,thMin,thMax,tempRef:parseFloat(document.getElementById('formTempRef').value)||null,humRef:parseFloat(document.getElementById('formHumRef').value)||null,notes:document.getElementById('formNotes').value.trim(),grammages,ingredients};
+  if(editingId){const idx=recipes.findIndex(r=>r.id===editingId);if(idx!==-1)recipes[idx]=rec;save();toast('✓ Recette mise à jour !');editingId=null;cur=null;openRecipe(rec.id);}
+  else{recipes.unshift(rec);save();toast('✓ Recette enregistrée !');editingId=null;goHome();}
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');const isHome=id==='screenHome';document.getElementById('backBtn').style.display=isHome?'none':'block';document.getElementById('fab').style.display=isHome?'flex':'none';window.scrollTo(0,0);}
+function goHome(){cur=null;corrEauDelta=0;corrOpen=false;editingId=null;renderHome();showScreen('screenHome');}
+renderHome();
+</script>
+</body>
+</html>
